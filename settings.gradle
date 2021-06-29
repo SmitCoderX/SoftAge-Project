@@ -1,0 +1,2 @@
+rootProject.name = "SoftAge Project"
+include ':app'
