@@ -15,6 +15,7 @@ import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
+import com.smitcoderx.softageproject.Db.ProjectDatabase
 import com.smitcoderx.softageproject.R
 import com.smitcoderx.softageproject.Utils.Constants.ACTION_START_LOCATION_SERVICE
 import com.smitcoderx.softageproject.Utils.Constants.ACTION_STOP_LOCATION_SERVICE
@@ -40,6 +41,7 @@ class LocationService : Service() {
         val intent = Intent(INTENT_ACTION)
         val bundle = Bundle()
         bundle.putParcelable(LATITUDE, l)
+
         intent.putExtra(LONGITUDE, bundle)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
     }
@@ -110,6 +112,7 @@ class LocationService : Service() {
             if (action != null) {
                 if (action == ACTION_START_LOCATION_SERVICE) {
                     startLocationService()
+
                 } else if (action == ACTION_STOP_LOCATION_SERVICE) {
                     stopLocationService()
                 }

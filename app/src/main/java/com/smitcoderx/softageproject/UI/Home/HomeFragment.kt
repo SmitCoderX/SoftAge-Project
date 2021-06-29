@@ -6,6 +6,7 @@ import android.app.ActivityManager
 import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Context.ACTIVITY_SERVICE
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
@@ -67,7 +68,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
                     askGPS()
                 } else if (manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-
                     startLocationService()
                 }
             }
@@ -87,7 +87,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     private fun isLocationRunning(): Boolean {
         val activityManager: ActivityManager =
-            requireActivity().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            requireActivity().getSystemService(ACTIVITY_SERVICE) as ActivityManager
         if (activityManager != null) {
             for (service: ActivityManager.RunningServiceInfo in activityManager.getRunningServices(
                 Integer.MAX_VALUE
@@ -105,7 +105,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     @SuppressLint("SetTextI18n")
     @RequiresApi(Build.VERSION_CODES.M)
-    private fun startLocationService() {
+    fun startLocationService() {
         if (!isLocationRunning()) {
             val intent = Intent(context, LocationService::class.java)
             intent.action = ACTION_START_LOCATION_SERVICE
@@ -155,7 +155,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             if (appInForeground(context!!)) {
                 status = "Foreground"
                 Log.d(TAG, "onReceive: Foreground")
-            } else if (!appInForeground(context)) {
+            } else if (appInBackground(context)) {
                 status = "Background"
                 Log.d(TAG, "onReceive: Background")
             }
@@ -165,10 +165,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 binding.tvStatus.text = "Status: $status"
             }
 
-            val details =
-                LocationDetails(null, latitude.toString(), longitude.toString(), setDate(), status)
-
-            viewModel.insert(details)
+            insertDetails(latitude.toString(), longitude.toString(), status)
 
 
             Log.d(TAG, "Location Updates $latitude, $longitude ")
@@ -194,15 +191,30 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
 
     fun appInForeground(context: Context): Boolean {
         val activityManager =
-            context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+            context.getSystemService(ACTIVITY_SERVICE) as ActivityManager
         val runningAppProcesses = activityManager.runningAppProcesses ?: return false
         return runningAppProcesses.any { it.processName == context.packageName && it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND }
+    }
+
+    fun appInBackground(context: Context): Boolean {
+        val activityManager =
+            context.getSystemService(ACTIVITY_SERVICE) as ActivityManager
+        val runningAppProcesses = activityManager.runningAppProcesses ?: return false
+        return runningAppProcesses.any { it.processName == context.packageName && it.importance != ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND }
     }
 
     @SuppressLint("SimpleDateFormat")
     private fun setDate(): String {
         val sdf = SimpleDateFormat("dd-MM-yyyy hh:mm:ss")
         return sdf.format(Date())
+    }
+
+
+    fun insertDetails(latitude: String, longitude: String, status: String) {
+        val details =
+            LocationDetails(null, latitude, longitude, setDate(), status)
+
+        viewModel.insert(details)
     }
 
 }
